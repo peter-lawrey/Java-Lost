@@ -31,7 +31,9 @@ public class HashCodeBenchmarkMain {
             string(62),
             string(128),
     };
-    private static final int K0 = 0x6d0f27bd;
+
+    private static final int M2 = 0x7a646e19;
+
     private static Field HASH = Jvm.getField(String.class, "hash");
     private static Field VALUE = Jvm.getField(String.class, "value");
 
@@ -75,15 +77,17 @@ public class HashCodeBenchmarkMain {
         return nativeHashCode(value);
     }
 
-    private static int nativeHashCode(byte[] value) {
-        int h = UnsafeMemory.INSTANCE.UNSAFE.getInt(value, BYTE_ARRAY_OFFSET);
-        if (value.length <= 4) {
-            return h;
-        }
-        long h2 = h;
+
+    static int nativeHashCode(byte[] value) {
+        long h = getIntFromArray(value, 0);
         for (int i = 4; i < value.length; i += 4)
-            h2 = h2 * K0 + UnsafeMemory.INSTANCE.UNSAFE.getInt(value, BYTE_ARRAY_OFFSET + i);
-        return (int) (h2 ^ (h2 >>> 32));
+            h = h * M2 + getIntFromArray(value, i);
+        h *= M2;
+        return (int) h ^ (int) (h >>> 32);
+    }
+
+    private static int getIntFromArray(byte[] value, int i) {
+        return UnsafeMemory.INSTANCE.UNSAFE.getInt(value, BYTE_ARRAY_OFFSET + i);
     }
 
     private static int hashCode31(String s) throws IllegalAccessException {
@@ -103,10 +107,23 @@ public class HashCodeBenchmarkMain {
         return hashCode109(value);
     }
 
-    private static int hashCode109(byte[] value) {
-        int h = 0;
-        for (byte b : value)
-            h = h * 109 + (b & 0xFF);
+    static int hashCode109(byte[] value) {
+        if (value.length == 0) return 0;
+        int h = value[0];
+        for (int i = 1; i < value.length; i++) {
+            h = h * 109 + value[i];
+        }
+        h *= 109;
+        return h;
+    }
+
+    static int hashCode251(byte[] value) {
+        if (value.length == 0) return 0;
+        int h = value[0];
+        for (int i = 1; i < value.length; i++) {
+            h = h * 251 + value[i];
+        }
+        h *= 251;
         return h;
     }
 
