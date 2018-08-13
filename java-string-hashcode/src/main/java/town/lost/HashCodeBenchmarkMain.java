@@ -14,6 +14,7 @@ import org.openjdk.jmh.runner.options.TimeValue;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Thread)
@@ -31,6 +32,12 @@ public class HashCodeBenchmarkMain {
             string(62),
             string(128),
     };
+    static final byte[][] bytes = new byte[strings.length][];
+
+    static {
+        for (int i = 0; i < bytes.length; i++)
+            bytes[i] = strings[i].getBytes(StandardCharsets.ISO_8859_1);
+    }
 
     private static final int M2 = 0x7a646e19;
 
@@ -52,9 +59,9 @@ public class HashCodeBenchmarkMain {
             System.out.println("measurementTime: " + time + " secs");
             Options opt = new OptionsBuilder()
                     .include(HashCodeBenchmarkMain.class.getSimpleName())
-//                    .warmupIterations(5)
+                    .warmupIterations(5)
                     .measurementIterations(5)
-                    .forks(1)
+                    .forks(5)
 //                    .mode(Mode.SampleTime)
                     .measurementTime(TimeValue.seconds(time))
                     .timeUnit(TimeUnit.MICROSECONDS)
@@ -136,19 +143,19 @@ public class HashCodeBenchmarkMain {
 
     @Benchmark
     public int String_hashCode31() throws IllegalAccessException {
-        String s = strings[counter++ & (strings.length - 1)];
+        byte[] s = bytes[counter++ & (strings.length - 1)];
         return hashCode31(s);
     }
 
     @Benchmark
     public int String_hashCode109() throws IllegalAccessException {
-        String s = strings[counter++ & (strings.length - 1)];
+        byte[] s = bytes[counter++ & (strings.length - 1)];
         return hashCode109(s);
     }
 
     @Benchmark
     public int String_native_hashCode() throws IllegalAccessException {
-        String s = strings[counter++ & (strings.length - 1)];
+        byte[] s = bytes[counter++ & (strings.length - 1)];
         return nativeHashCode(s);
     }
 }
