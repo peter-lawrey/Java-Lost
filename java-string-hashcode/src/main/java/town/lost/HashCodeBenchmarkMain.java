@@ -39,7 +39,7 @@ public class HashCodeBenchmarkMain {
             bytes[i] = strings[i].getBytes(StandardCharsets.ISO_8859_1);
     }
 
-    private static final int M2 = 0x7a646e19;
+    private static final int M2 = 0x7A646E4D;
 
     private static Field HASH = Jvm.getField(String.class, "hash");
     private static Field VALUE = Jvm.getField(String.class, "value");
@@ -84,13 +84,14 @@ public class HashCodeBenchmarkMain {
         return nativeHashCode(value);
     }
 
-
+    //    static int bit = 23;
     static int nativeHashCode(byte[] value) {
         long h = getIntFromArray(value, 0);
         for (int i = 4; i < value.length; i += 4)
             h = h * M2 + getIntFromArray(value, i);
         h *= M2;
-        return (int) h ^ (int) (h >>> 32);
+        int f = (int) h ^ (int) (h >>> 25);
+        return f;
     }
 
     private static int getIntFromArray(byte[] value, int i) {
@@ -102,10 +103,11 @@ public class HashCodeBenchmarkMain {
         return hashCode109(value);
     }
 
-    private static int hashCode31(byte[] value) {
+    static int hashCode31(byte[] value) {
         int h = 0;
-        for (byte b : value)
+        for (byte b : value) {
             h = h * 31 + (b & 0xFF);
+        }
         return h;
     }
 
@@ -142,19 +144,19 @@ public class HashCodeBenchmarkMain {
     }
 
     @Benchmark
-    public int String_hashCode31() throws IllegalAccessException {
+    public int String_hashCode31() {
         byte[] s = bytes[counter++ & (strings.length - 1)];
         return hashCode31(s);
     }
 
     @Benchmark
-    public int String_hashCode109() throws IllegalAccessException {
+    public int String_hashCode109() {
         byte[] s = bytes[counter++ & (strings.length - 1)];
         return hashCode109(s);
     }
 
     @Benchmark
-    public int String_native_hashCode() throws IllegalAccessException {
+    public int String_native_hashCode() {
         byte[] s = bytes[counter++ & (strings.length - 1)];
         return nativeHashCode(s);
     }
